@@ -47,18 +47,29 @@ where
 
     /// Attempts to load a settings container, if it fails, it will return a default SettingsContainer
     /// ```
+    /// use serde::{Deserialize, Serialize};
     /// use cr_program_settings::settings_container::SettingsContainer;
     ///
-    /// let settings = SettingsContainer::new("some_cool_data".to_string(),env!("CARGO_CRATE_NAME"),"doctest_save_settings.ser");
+    /// #[derive(Serialize,Deserialize,PartialEq,Debug)]
+    /// struct InnerStruct {
+    /// field1: u32,
+    /// field2: bool,
+    /// field3: String,
+    /// };
+    ///
+    /// let inner = InnerStruct{
+    /// field1: 124,field2: true,field3: "cool struct data in a string!".to_string(),};
+    ///
+    /// let settings = SettingsContainer::new(inner,env!("CARGO_CRATE_NAME"),"doctest_save_settings.ser");
     ///
     /// let _ = settings.save().expect("Failed to save settings container to file");
     ///
     /// // This should load settings successfully
-    /// let loaded_settings_success = SettingsContainer::<String>::try_load_or_default(env!("CARGO_CRATE_NAME"),"doctest_save_settings.ser");
+    /// let loaded_settings_success = SettingsContainer::<InnerStruct>::try_load_or_default(env!("CARGO_CRATE_NAME"),"doctest_save_settings.ser");
     /// assert_eq!(loaded_settings_success, settings);
     ///
-    /// // This shoudl failt, and resort to the default settings
-    /// let loaded_settings_failed = SettingsContainer::<String>::try_load_or_default(env!("CARGO_CRATE_NAME"),"not_a_settings_file.ser");
+    /// // This should fail, and resort to the default settings
+    /// let loaded_settings_failed = SettingsContainer::<InnerStruct>::try_load_or_default(env!("CARGO_CRATE_NAME"),"not_a_settings_file.ser");
     /// assert_eq!(loaded_settings_failed, SettingsContainer::default(env!("CARGO_CRATE_NAME"),"not_a_settings_file.ser"));
     /// ```
     pub fn try_load_or_default(crate_name: &str, file_name: &str) -> Self {

@@ -1,5 +1,4 @@
-use cr_program_settings::{delete_settings, load_settings, save_settings};
-use serde::{Deserialize, Serialize};
+use cr_program_settings::prelude::*;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct TestStruct {
@@ -13,7 +12,7 @@ fn test_functions() {
     let t = TestStruct {
         a: -10.0444,
         b: 0,
-        c: "sdaad".to_string(),
+        c: "random text to save as a settings file".to_string(),
     };
     let crate_name = "cr_program_settings_2";
     save_settings(crate_name, &t).unwrap();

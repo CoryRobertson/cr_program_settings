@@ -1,5 +1,4 @@
-use cr_program_settings::*;
-use serde::{Deserialize, Serialize};
+use cr_program_settings::prelude::*;
 
 #[derive(Serialize, Deserialize, Default, Debug, PartialEq)]
 struct TestStruct {
@@ -32,16 +31,16 @@ fn test_primary_macros() {
         settings: Settings {
             a: 17,
             b: true,
-            c: "asdad".to_string(),
+            c: "settings data".to_string(),
             list: vec![
-                "dsadasdsad49\"836521rf62%$^^%*%(^@".to_string(),
+                "random data incoming!!!\"836521rf62%$^^%*%(^@".to_string(),
                 "724\"'''''\"\"419".to_string(),
             ],
         },
         other_struct: OtherStruct {
             a: false,
             b: -390.724419,
-            c: ("dsoicjsdoicsdoci".to_string(), -15),
+            c: ("random test data$$!#".to_string(), -15),
         },
     };
 
