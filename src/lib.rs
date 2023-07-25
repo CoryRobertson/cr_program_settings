@@ -2,12 +2,14 @@
 #![warn(missing_docs)]
 
 use crate::LoadSettingsError::{DeserializationError, IOError};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Error, Read, Write};
 use std::path::PathBuf;
 use std::{fs, io};
+
+/// Source code for the settings container.
+pub mod settings_container;
 
 /// Returns the users home as an optional using the "home" crate
 pub fn get_user_home() -> Option<PathBuf> {
@@ -26,7 +28,7 @@ pub fn get_user_home() -> Option<PathBuf> {
 /// setting1: u32,
 /// setting2: String,
 /// setting3: Vec<bool>,
-/// };
+/// }
 ///
 /// let settings = Settings{
 ///     setting1: 128,
@@ -152,7 +154,7 @@ pub fn load_settings_with_filename<T>(
     file_name: &str,
 ) -> Result<T, LoadSettingsError>
 where
-    T: DeserializeOwned,
+    for<'a> T: Deserialize<'a>,
 {
     match get_user_home() {
         None => Err(LoadSettingsError::FailedToGetUserHome),
@@ -176,11 +178,11 @@ where
     }
 }
 
-/// Loads a given settings file from the home directory and the given crate name
+/// Loads a given settings file from the home directory and the given crate name.
 /// Given "my_cool_rust_project", the program would search in /home/username/my_cool_rust_project for a settings file
 pub fn load_settings<T>(crate_name: &str) -> Result<T, LoadSettingsError>
 where
-    T: DeserializeOwned,
+    for<'a> T: Deserialize<'a>,
 {
     load_settings_with_filename(crate_name, format!("{}.ser", crate_name).as_str())
 }
