@@ -1,11 +1,15 @@
 //! cr_program_state is a library that simplifies saving a settings file for the program.
 #![warn(missing_docs)]
 
+/// Global settings file path list, paths are added when successfully loaded, or when successfully saved.
+pub static SETTINGS_PATHS: RwLock<Vec<PathBuf>> = RwLock::new(vec![]);
+
 use crate::LoadSettingsError::{DeserializationError, IOError};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Error, Read, Write};
 use std::path::PathBuf;
+use std::sync::RwLock;
 use std::{fs, io};
 
 /// Prelude module that contains all the imports for cr_program_settings;
@@ -13,7 +17,7 @@ pub mod prelude {
     pub use crate::{
         delete_setting_file, delete_settings, get_user_home, load_settings,
         load_settings_with_filename, save_settings, save_settings_with_filename,
-        settings_container,
+        settings_container, SETTINGS_PATHS,
     };
     pub use serde::{Deserialize, Serialize};
 }
@@ -167,10 +171,16 @@ where
             let settings_path = home_dir.join(PathBuf::from(crate_name));
             let settings_file_path = settings_path.join(PathBuf::from(file_name));
             match fs::create_dir_all(&settings_path) {
-                Ok(_) => match File::create(settings_file_path) {
+                Ok(_) => match File::create(&settings_file_path) {
                     Ok(mut file) => match toml::to_string_pretty(&settings) {
                         Ok(serialized_data) => match file.write_all(serialized_data.as_bytes()) {
-                            Ok(_) => Ok(()),
+                            Ok(_) => {
+                                {
+                                    let mut lock = SETTINGS_PATHS.write().unwrap();
+                                    lock.push(settings_file_path);
+                                }
+                                Ok(())
+                            }
                             Err(err) => Err(SaveSettingsError::IOError(err)),
                         },
                         Err(err) => Err(SaveSettingsError::SerializationError(err)),
@@ -217,12 +227,20 @@ where
         Some(home_dir) => {
             let settings_path = home_dir.join(PathBuf::from(crate_name));
             let settings_file_path = settings_path.join(PathBuf::from(file_name));
-            match File::open(settings_file_path) {
+            match File::open(&settings_file_path) {
                 Ok(mut file) => {
                     let mut file_data = String::new();
                     match file.read_to_string(&mut file_data) {
                         Ok(_) => match toml::from_str::<T>(&file_data) {
-                            Ok(thing) => Ok(thing),
+                            Ok(thing) => {
+                                {
+                                    let mut lock = SETTINGS_PATHS.write().unwrap();
+                                    if !lock.contains(&settings_file_path) {
+                                        lock.push(settings_file_path);
+                                    }
+                                }
+                                Ok(thing)
+                            }
                             Err(err) => Err(DeserializationError(err)),
                         },
                         Err(err) => Err(IOError(err)),
@@ -248,13 +266,53 @@ where
 pub fn delete_settings(crate_name: &str) -> io::Result<()> {
     let home_dir = get_user_home().unwrap();
     let settings_path = home_dir.join(PathBuf::from(crate_name));
-    fs::remove_dir_all(settings_path)
+    fs::remove_dir_all(&settings_path)?;
+    SETTINGS_PATHS
+        .write()
+        .unwrap()
+        .retain(|path| match path.parent() {
+            None => true,
+            Some(parent) => parent != settings_path,
+        });
+    Ok(())
 }
 
 /// Deletes a specific settings file
+/// ```
+/// use std::ffi::OsStr;
+/// use cr_program_settings::prelude::*;
+/// #[derive(Serialize,Deserialize)]
+/// struct TestStruct {field1: u32}
+///
+/// let s = TestStruct{field1: 6};
+///
+/// let sn = "settings_file_978.ser";
+/// save_settings!(s,sn);
+/// assert!(SETTINGS_PATHS.read().unwrap().iter().any(|path| {
+/// match path.file_name() {
+/// None => { false }
+/// Some(file_name) => { file_name == sn }
+/// }
+/// }));
+///
+/// delete_settings!(sn);
+/// assert!(!SETTINGS_PATHS.read().unwrap().iter().any(|path| {
+/// match path.file_name() {
+/// None => { false }
+/// Some(file_name) => { file_name == sn }
+/// }
+/// }));
+///
+///
+/// ```
 pub fn delete_setting_file(crate_name: &str, file_name: &str) -> io::Result<()> {
     let home_dir = get_user_home().unwrap();
     let settings_path = home_dir.join(PathBuf::from(crate_name));
     let settings_file = settings_path.join(file_name);
-    fs::remove_file(settings_file)
+    fs::remove_file(&settings_file)?;
+    SETTINGS_PATHS
+        .write()
+        .unwrap()
+        .retain(|path| path != &settings_file);
+    Ok(())
 }

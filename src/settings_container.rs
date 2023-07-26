@@ -55,7 +55,7 @@ where
     /// field1: u32,
     /// field2: bool,
     /// field3: String,
-    /// };
+    /// }
     ///
     /// let inner = InnerStruct{
     /// field1: 124,field2: true,field3: "cool struct data in a string!".to_string(),};
