@@ -1,4 +1,4 @@
-//! SettingsContainer source file
+//! `SettingsContainer` source file
 #![warn(missing_docs)]
 
 use crate::{
@@ -7,7 +7,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 
 /// Struct that handles saving and loading.
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
 pub struct SettingsContainer<T> {
     /// Generic settings inner field.
     settings: Option<T>,
@@ -21,7 +21,7 @@ impl<T> SettingsContainer<T>
 where
     for<'a> T: Serialize + Deserialize<'a>,
 {
-    /// Creates a new SettingsContainer
+    /// Creates a new `SettingsContainer`
     pub fn new(content: T, crate_name: &str, file_name: &str) -> Self {
         Self {
             settings: Some(content),
@@ -45,7 +45,7 @@ where
         self.settings = Some(settings);
     }
 
-    /// Attempts to load a settings container, if it fails, it will return a default SettingsContainer
+    /// Attempts to load a settings container, if it fails, it will return a default `SettingsContainer`
     /// ```
     /// use serde::{Deserialize, Serialize};
     /// use cr_program_settings::settings_container::SettingsContainer;
@@ -75,11 +75,11 @@ where
     pub fn try_load_or_default(crate_name: &str, file_name: &str) -> Self {
         match SettingsContainer::<T>::load(crate_name, file_name) {
             Ok(settings_container) => settings_container,
-            Err(_) => SettingsContainer::default(crate_name, file_name),
+            Err(_) => Self::default(crate_name, file_name),
         }
     }
 
-    /// Returns a default SettingsContainer
+    /// Returns a default `SettingsContainer`
     pub fn default(crate_name: &str, file_name: &str) -> Self {
         Self {
             settings: None,
@@ -88,14 +88,14 @@ where
         }
     }
 
-    /// Loads a settings container using a crate_name and file_name, returns a Ok(SettingsContainer) or Err(LoadSettingsError)
-    /// For a unwrap_or_default style, use try_load_or_default()
+    /// Loads a settings container using a `crate_name` and `file_name`, returns a `Ok(SettingsContainer)` or `Err(LoadSettingsError)`
+    /// For a `unwrap_or_default` style, use try_load_or_default()
     /// For example usage, see save() or try_load_or_default() documentation
     pub fn load(crate_name: &str, file_name: &str) -> Result<Self, LoadSettingsError> {
         load_settings_with_filename(crate_name, file_name)
     }
 
-    /// Saves a settings container using its crate_name and file_name within the struct.
+    /// Saves a settings container using its `crate_name` and `file_name` within the struct.
     /// ```
     /// use cr_program_settings::settings_container::SettingsContainer;
     ///

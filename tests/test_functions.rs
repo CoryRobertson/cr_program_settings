@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use cr_program_settings::prelude::*;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]

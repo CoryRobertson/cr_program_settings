@@ -1,4 +1,4 @@
-//! cr_program_state is a library that simplifies saving a settings file for the program.
+//! `cr_program_state` is a library that simplifies saving a settings file for the program.
 #![warn(missing_docs)]
 
 /// Global settings file path list, paths are added when successfully loaded, or when successfully saved.
@@ -12,14 +12,13 @@ use std::path::PathBuf;
 use std::sync::RwLock;
 use std::{fs, io};
 
-/// Prelude module that contains all the imports for cr_program_settings;
+/// Prelude module that contains all the imports for `cr_program_settings`;
 pub mod prelude {
     pub use crate::{
         delete_setting_file, delete_settings, get_user_home, load_settings,
         load_settings_with_filename, save_settings, save_settings_with_filename,
         settings_container, SETTINGS_PATHS,
     };
-    pub use serde::{Deserialize, Serialize};
 }
 
 /// Source code for the settings container.
@@ -39,6 +38,7 @@ pub fn get_user_home() -> Option<PathBuf> {
 ///     save_settings!(settings_struct, file_name, folder_name)
 ///
 /// ```
+/// use serde::{Deserialize, Serialize};
 /// use cr_program_settings::prelude::*;
 ///
 /// // create a struct we want to save, it needs to implement at a minimum of Serialize and Deserialize
@@ -93,6 +93,7 @@ macro_rules! save_settings {
 ///
 /// For more usage examples, see save_settings!() documentation.
 /// ```
+/// use serde::{Deserialize, Serialize};
 /// use cr_program_settings::prelude::*;
 ///
 /// // create a struct we want to save, it needs to implement at a minimum of Serialize and Deserialize
@@ -156,7 +157,7 @@ pub enum SaveSettingsError {
     SerializationError(toml::ser::Error),
 }
 
-/// Saves a serializable settings object to a given filename in USER_HOME/crate_name/file_name
+/// Saves a serializable settings object to a given filename in `USER_HOME/crate_name/file_name`
 pub fn save_settings_with_filename<T>(
     crate_name: &str,
     file_name: &str,
@@ -194,8 +195,8 @@ where
 }
 
 /// Saves the settings file given in a directory named using the crate name
-/// Given a struct and a crate name of "my_cool_rust_project", the program
-/// would save it to /home/username/my_cool_rust_project/my_cool_rust_project.ser
+/// Given a struct and a crate name of `my_cool_rust_project`, the program
+/// would save it to `/home/username/my_cool_rust_project/my_cool_rust_project.ser`
 pub fn save_settings<T>(crate_name: &str, settings: &T) -> Result<(), SaveSettingsError>
 where
     T: Serialize,
@@ -214,7 +215,7 @@ pub enum LoadSettingsError {
     DeserializationError(toml::de::Error),
 }
 
-/// Loads a settings serialized file from USER_HOME/crate_name/file_name
+/// Loads a settings serialized file from `USER_HOME/crate_name/file_name`
 pub fn load_settings_with_filename<T>(
     crate_name: &str,
     file_name: &str,
@@ -253,7 +254,7 @@ where
 }
 
 /// Loads a given settings file from the home directory and the given crate name.
-/// Given "my_cool_rust_project", the program would search in /home/username/my_cool_rust_project for a settings file
+/// Given `my_cool_rust_project`, the program would search in `/home/username/my_cool_rust_project` for a settings file
 pub fn load_settings<T>(crate_name: &str) -> Result<T, LoadSettingsError>
 where
     for<'a> T: Deserialize<'a>,
@@ -261,8 +262,8 @@ where
     load_settings_with_filename(crate_name, format!("{}.ser", crate_name).as_str())
 }
 
-/// Deletes the settings directory found in the <user home>/crate_name
-/// e.g. /home/username/my_cool_project
+/// Deletes the settings directory found in the `<user home>/crate_name`
+/// e.g. `/home/username/my_cool_project`
 pub fn delete_settings(crate_name: &str) -> io::Result<()> {
     let home_dir = get_user_home().unwrap();
     let settings_path = home_dir.join(PathBuf::from(crate_name));
@@ -280,6 +281,7 @@ pub fn delete_settings(crate_name: &str) -> io::Result<()> {
 /// Deletes a specific settings file
 /// ```
 /// use std::ffi::OsStr;
+/// use serde::{Deserialize, Serialize};
 /// use cr_program_settings::prelude::*;
 /// #[derive(Serialize,Deserialize)]
 /// struct TestStruct {field1: u32}
