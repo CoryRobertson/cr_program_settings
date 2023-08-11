@@ -15,17 +15,19 @@ use cr_program_settings::prelude::*;
  setting3: Vec<bool>,
  }
 
- let settings = Settings{
-     setting1: 128,
-     setting2: "this is a cool setting struct".to_string(),
-     setting3: vec![false,true,false,false],
- };
+fn main() {
+    let settings = Settings{
+        setting1: 128,
+        setting2: "this is a cool setting struct".to_string(),
+        setting3: vec![false,true,false,false],
+    };
 
- save_settings!(settings).expect("Settings were unable to be saved");
+    save_settings!(settings).expect("Settings were unable to be saved");
 
- // -- snip --
+    // -- snip --
 
- let loaded_settings = load_settings!(Settings).expect("Unable to read settings file");
+    let loaded_settings = load_settings!(Settings).expect("Unable to read settings file");
 
- assert_eq!(settings,loaded_settings);
+    assert_eq!(settings,loaded_settings);
+}
 ```
