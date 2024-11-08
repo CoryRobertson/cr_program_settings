@@ -4,23 +4,15 @@
 /// Global settings file path list, paths are added when successfully loaded, or when successfully saved.
 pub static SETTINGS_PATHS: RwLock<Vec<PathBuf>> = RwLock::new(vec![]);
 
-use serde::{Deserialize, Serialize};
-use std::io::{Read, Write};
-use std::path::PathBuf;
-use std::sync::RwLock;
 mod serialization;
 
-/// Prelude module that contains all the imports for `cr_program_settings`;
-pub mod prelude {
-    pub use crate::{
-        delete_settings, get_user_home, load_settings,
-        save_settings,
-        settings_container, SETTINGS_PATHS,
-    };
-    pub use crate::delete::{delete_setting_file, delete_settings};
-    pub use crate::load::{load_settings, load_settings_with_filename};
-    pub use crate::save::{save_settings, save_settings_with_filename};
-}
+use std::path::PathBuf;
+use std::sync::RwLock;
+pub use delete::*;
+pub use load::*;
+pub use save::*;
+pub use settings_container::SettingsContainer;
+
 
 /// Source code for the settings container.
 pub mod settings_container;
@@ -30,6 +22,7 @@ pub mod save;
 pub mod load;
 /// Module containing all deletion related code
 pub mod delete;
+
 
 /// Returns the users home as an optional using the "home" crate
 pub fn get_user_home() -> Option<PathBuf> {
@@ -54,7 +47,7 @@ compile_error!("Mutually exclusive features are being used for cr_program_settin
 ///
 /// ```
 /// use serde::{Deserialize, Serialize};
-/// use cr_program_settings::prelude::*;
+/// use cr_program_settings::*;
 ///
 /// // create a struct we want to save, it needs to implement at a minimum of Serialize and Deserialize
 /// #[derive(Serialize,Deserialize, PartialEq, Debug)]
@@ -109,7 +102,7 @@ macro_rules! save_settings {
 /// For more usage examples, see save_settings!() documentation.
 /// ```
 /// use serde::{Deserialize, Serialize};
-/// use cr_program_settings::prelude::*;
+/// use cr_program_settings::*;
 ///
 /// // create a struct we want to save, it needs to implement at a minimum of Serialize and Deserialize
 /// #[derive(Serialize,Deserialize, PartialEq, Debug)]
@@ -132,6 +125,9 @@ macro_rules! save_settings {
 /// assert_eq!(settings,loaded_settings);
 /// ```
 macro_rules! load_settings {
+    () => {
+        load_settings(env!("CARGO_CRATE_NAME"))
+    };
     ($setting_type:ty) => {
         load_settings::<$setting_type>(env!("CARGO_CRATE_NAME"))
     };

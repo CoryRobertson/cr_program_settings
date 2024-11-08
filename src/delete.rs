@@ -22,7 +22,7 @@ pub fn delete_settings(crate_name: &str) -> io::Result<()> {
 /// ```
 /// use std::ffi::OsStr;
 /// use serde::{Deserialize, Serialize};
-/// use cr_program_settings::prelude::*;
+/// use cr_program_settings::*;
 /// #[derive(Serialize,Deserialize)]
 /// struct TestStruct {field1: u32}
 ///

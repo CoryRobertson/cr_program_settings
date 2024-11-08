@@ -1,5 +1,8 @@
+use cr_program_settings::delete_setting_file;
+use cr_program_settings::load_settings_with_filename;
+use cr_program_settings::save_settings_with_filename;
 use serde::{Deserialize, Serialize};
-use cr_program_settings::prelude::*;
+use cr_program_settings::{delete_settings, load_settings, save_settings};
 
 #[derive(Serialize, Deserialize, Default, Debug, PartialEq)]
 struct TestStruct {

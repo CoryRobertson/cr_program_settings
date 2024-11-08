@@ -28,3 +28,6 @@ toml = ["dep:toml"]
 json = ["dep:serde_json"]
 yml = ["dep:serde_yml"]
 ron= ["dep:ron"]
+
+[dev-dependencies]
+proptest = "1.5"

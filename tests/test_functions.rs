@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use cr_program_settings::prelude::*;
+use cr_program_settings::{delete_settings, load_settings, save_settings};
 
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
