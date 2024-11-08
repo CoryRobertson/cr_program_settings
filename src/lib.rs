@@ -24,9 +24,12 @@ pub mod prelude {
 
 /// Source code for the settings container.
 pub mod settings_container;
-mod save;
-mod load;
-mod delete;
+/// Module containing all save related code
+pub mod save;
+/// Module containing all load related code
+pub mod load;
+/// Module containing all deletion related code
+pub mod delete;
 
 /// Returns the users home as an optional using the "home" crate
 pub fn get_user_home() -> Option<PathBuf> {
@@ -85,13 +88,13 @@ compile_error!("Mutually exclusive features are being used for cr_program_settin
 /// ```
 macro_rules! save_settings {
     ($settings:expr) => {
-        save::save_settings(env!("CARGO_CRATE_NAME"), &$settings)
+        save_settings(env!("CARGO_CRATE_NAME"), &$settings)
     };
     ($settings: expr, $file_name: expr) => {
-        save::save_settings_with_filename(env!("CARGO_CRATE_NAME"), &$file_name, &$settings)
+        save_settings_with_filename(env!("CARGO_CRATE_NAME"), &$file_name, &$settings)
     };
     ($settings: expr, $file_name: expr, $folder_name: expr) => {
-        save::save_settings_with_filename($folder_name, &$file_name, &$settings)
+        save_settings_with_filename($folder_name, &$file_name, &$settings)
     };
 }
 
@@ -130,13 +133,13 @@ macro_rules! save_settings {
 /// ```
 macro_rules! load_settings {
     ($setting_type:ty) => {
-        load::load_settings::<$setting_type>(env!("CARGO_CRATE_NAME"))
+        load_settings::<$setting_type>(env!("CARGO_CRATE_NAME"))
     };
     ($setting_type:ty,$file_name: expr) => {
-        load::load_settings_with_filename::<$setting_type>(env!("CARGO_CRATE_NAME"), $file_name)
+        load_settings_with_filename::<$setting_type>(env!("CARGO_CRATE_NAME"), $file_name)
     };
     ($setting_type:ty,$file_name: expr,$folder_name: expr) => {
-        load::load_settings_with_filename::<$setting_type>($folder_name, $file_name)
+        load_settings_with_filename::<$setting_type>($folder_name, $file_name)
     };
 }
 
@@ -148,12 +151,12 @@ macro_rules! load_settings {
 ///     delete_settings!(file_name, folder_name) // deletes the file named: file_name stored in the folder named: folder_name
 macro_rules! delete_settings {
     () => {
-        delete::delete_settings(env!("CARGO_CRATE_NAME"))
+        delete_settings(env!("CARGO_CRATE_NAME"))
     };
     ($file_name: expr) => {
-        delete::delete_setting_file(env!("CARGO_CRATE_NAME"), $file_name)
+        delete_setting_file(env!("CARGO_CRATE_NAME"), $file_name)
     };
     ($file_name: expr,$folder_name: expr) => {
-        delete::delete_setting_file($folder_name, $file_name)
+        delete_setting_file($folder_name, $file_name)
     };
 }
