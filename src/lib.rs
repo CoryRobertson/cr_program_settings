@@ -3,14 +3,16 @@
 
 /// Global settings file path list, paths are added when successfully loaded, or when successfully saved.
 pub static SETTINGS_PATHS: RwLock<Vec<PathBuf>> = RwLock::new(vec![]);
-
-use crate::LoadSettingsError::{DeserializationError, IOError};
+use crate::LoadSettingsError::{IOError};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Error, Read, Write};
 use std::path::PathBuf;
 use std::sync::RwLock;
 use std::{fs, io};
+use crate::serialization::{deserialize_from_str, serialize_to_string};
+
+mod serialization;
 
 /// Prelude module that contains all the imports for `cr_program_settings`;
 pub mod prelude {
@@ -154,8 +156,33 @@ pub enum SaveSettingsError {
     /// The library encountered an io error when saving or creating the file or directory
     IOError(Error),
     /// The library encountered an error while serializing the struct
-    SerializationError(toml::ser::Error),
+    SerializationError(SerializationError),
 }
+
+#[derive(Debug)]
+pub struct SerializationError(
+    #[cfg(feature = "ron")]
+    pub ron::Error,
+    #[cfg(feature = "toml")]
+    pub toml::ser::Error,
+    #[cfg(feature = "yml")]
+    pub serde_yml::Error,
+    #[cfg(feature = "json")]
+    pub serde_json::Error,
+);
+
+
+#[cfg(any(
+    all(feature = "json", any(feature = "yml", feature = "ron", feature = "toml")),
+    all(feature = "yml", any(feature = "json", feature = "ron", feature = "toml")),
+    all(feature = "ron", any(feature = "yml", feature = "json", feature = "toml")),
+    all(feature = "toml", any(feature = "yml", feature = "ron", feature = "json")),
+))]
+compile_error!("Mutually exclusive features are being used for cr_program_settings, only use on serialization feature");
+
+
+
+
 
 /// Saves a serializable settings object to a given filename in `USER_HOME/crate_name/file_name`
 pub fn save_settings_with_filename<T>(
@@ -173,7 +200,7 @@ where
             let settings_file_path = settings_path.join(PathBuf::from(file_name));
             match fs::create_dir_all(&settings_path) {
                 Ok(_) => match File::create(&settings_file_path) {
-                    Ok(mut file) => match toml::to_string_pretty(&settings) {
+                    Ok(mut file) => match serialize_to_string(&settings) {
                         Ok(serialized_data) => match file.write_all(serialized_data.as_bytes()) {
                             Ok(_) => {
                                 {
@@ -212,8 +239,20 @@ pub enum LoadSettingsError {
     /// The library encountered an io error while reading the file or accessing the directory
     IOError(Error),
     /// The library encountered an error while deserializing the settings file
-    DeserializationError(toml::de::Error),
+    DeserializationError(DeserializationError),
 }
+
+#[derive(Debug)]
+pub struct DeserializationError(
+    #[cfg(feature = "ron")]
+    pub ron::Error,
+    #[cfg(feature = "toml")]
+    pub toml::ser::Error,
+    #[cfg(feature = "yml")]
+    pub serde_yml::Error,
+    #[cfg(feature = "json")]
+    pub serde_json::Error,
+);
 
 /// Loads a settings serialized file from `USER_HOME/crate_name/file_name`
 pub fn load_settings_with_filename<T>(
@@ -232,17 +271,19 @@ where
                 Ok(mut file) => {
                     let mut file_data = String::new();
                     match file.read_to_string(&mut file_data) {
-                        Ok(_) => match toml::from_str::<T>(&file_data) {
-                            Ok(thing) => {
-                                {
-                                    let mut lock = SETTINGS_PATHS.write().unwrap();
-                                    if !lock.contains(&settings_file_path) {
-                                        lock.push(settings_file_path);
+                        Ok(_) => {
+                            match deserialize_from_str::<T>(&file_data) {
+                                Ok(thing) => {
+                                    {
+                                        let mut lock = SETTINGS_PATHS.write().unwrap();
+                                        if !lock.contains(&settings_file_path) {
+                                            lock.push(settings_file_path);
+                                        }
                                     }
+                                    Ok(thing)
                                 }
-                                Ok(thing)
+                                Err(err) => Err(LoadSettingsError::DeserializationError(err)),
                             }
-                            Err(err) => Err(DeserializationError(err)),
                         },
                         Err(err) => Err(IOError(err)),
                     }
