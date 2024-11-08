@@ -1,5 +1,9 @@
 use serde::{Deserialize, Serialize};
-use crate::{DeserializationError, SerializationError};
+use serialize_error::SerializationError;
+use deserialize_error::DeserializationError;
+
+pub mod serialize_error;
+pub mod deserialize_error;
 
 /// Serialize a given struct to string using which ever serialization strategy feature is chosen for this crate
 pub(crate) fn serialize_to_string<T: Serialize>(thing: &T) -> Result<String,SerializationError> {

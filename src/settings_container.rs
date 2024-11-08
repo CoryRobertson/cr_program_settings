@@ -1,10 +1,11 @@
 //! `SettingsContainer` source file
 #![warn(missing_docs)]
 
-use crate::{
-    load_settings_with_filename, save_settings_with_filename, LoadSettingsError, SaveSettingsError,
-};
+use crate::load::load_settings_with_filename;
 use serde::{Deserialize, Serialize};
+use crate::save::save_settings_with_filename;
+use crate::serialization::deserialize_error::LoadSettingsError;
+use crate::serialization::serialize_error::SaveSettingsError;
 
 /// Struct that handles saving and loading.
 #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
