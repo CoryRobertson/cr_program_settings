@@ -1,8 +1,8 @@
 use cr_program_settings::delete_setting_file;
 use cr_program_settings::load_settings_with_filename;
 use cr_program_settings::save_settings_with_filename;
-use serde::{Deserialize, Serialize};
 use cr_program_settings::{delete_settings, load_settings, save_settings};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Default, Debug, PartialEq)]
 struct TestStruct {
@@ -50,7 +50,7 @@ fn test_primary_macros() {
 
     save_settings!(&t).unwrap();
 
-    let loaded_settings = load_settings!(TestStruct).unwrap();
+    let loaded_settings = load_settings!().unwrap();
     assert_eq!(t, loaded_settings);
 
     delete_settings!().unwrap();
@@ -76,7 +76,7 @@ fn test_filename_macros() {
 
     let _ = save_settings!(&s, file_name).unwrap();
 
-    let loaded_settings = load_settings!(TestStruct, file_name).unwrap();
+    let loaded_settings: TestStruct = load_settings!(file_name).unwrap();
 
     assert_eq!(loaded_settings, s);
 

@@ -1,11 +1,11 @@
-use serde::Deserialize;
-use std::path::PathBuf;
-use std::fs::File;
-use std::io::Read;
 use crate::serialization::deserialize_error::LoadSettingsError;
 use crate::serialization::deserialize_error::LoadSettingsError::IOError;
 use crate::serialization::deserialize_from_str;
-use crate::SETTINGS_PATHS;
+use crate::{valid_name, SETTINGS_PATHS};
+use serde::Deserialize;
+use std::fs::File;
+use std::io::Read;
+use std::path::PathBuf;
 
 /// Loads a settings serialized file from `USER_HOME/crate_name/file_name`
 pub fn load_settings_with_filename<T>(
@@ -15,36 +15,35 @@ pub fn load_settings_with_filename<T>(
 where
     for<'a> T: Deserialize<'a>,
 {
-    match crate::get_user_home() {
-        None => Err(LoadSettingsError::FailedToGetUserHome),
-        Some(home_dir) => {
-            let settings_path = home_dir.join(PathBuf::from(crate_name));
-            let settings_file_path = settings_path.join(PathBuf::from(file_name));
-            match File::open(&settings_file_path) {
-                Ok(mut file) => {
-                    let mut file_data = String::new();
-                    match file.read_to_string(&mut file_data) {
-                        Ok(_) => {
-                            match deserialize_from_str::<T>(&file_data) {
-                                Ok(thing) => {
-                                    {
-                                        let mut lock = SETTINGS_PATHS.write().unwrap();
-                                        if !lock.contains(&settings_file_path) {
-                                            lock.push(settings_file_path);
-                                        }
-                                    }
-                                    Ok(thing)
-                                }
-                                Err(err) => Err(LoadSettingsError::DeserializationError(err)),
-                            }
-                        },
-                        Err(err) => Err(IOError(err)),
-                    }
-                }
-                Err(err) => Err(IOError(err)),
-            }
-        }
+    if !valid_name(crate_name) {
+        return Err(LoadSettingsError::InvalidCrateName);
     }
+    if !valid_name(file_name) {
+        return Err(LoadSettingsError::InvalidFileName);
+    }
+
+    let home_dir = crate::get_user_home().ok_or(LoadSettingsError::FailedToGetUserHome)?;
+    let settings_path = home_dir.join(PathBuf::from(crate_name));
+    let settings_file_path = settings_path.join(PathBuf::from(file_name));
+    let mut file = File::open(&settings_file_path).map_err(|err| IOError(err))?;
+    let mut file_data = String::new();
+
+    let _ = file
+        .read_to_string(&mut file_data)
+        .map_err(|err| IOError(err))?;
+
+    let deser = deserialize_from_str::<T>(&file_data)
+        .map_err(|err| LoadSettingsError::DeserializationError(err))?;
+
+    let mut lock = SETTINGS_PATHS
+        .write()
+        .map_err(|_| LoadSettingsError::MutexPoisoned)?;
+
+    if !lock.contains(&settings_file_path) {
+        lock.push(settings_file_path);
+    }
+
+    Ok(deser)
 }
 
 /// Loads a given settings file from the home directory and the given crate name.

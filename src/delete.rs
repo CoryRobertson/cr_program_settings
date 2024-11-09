@@ -1,21 +1,12 @@
-use std::{fs, io};
+use crate::serialization::DeleteSettingsError;
+use crate::{valid_name, SETTINGS_PATHS};
+use std::fs;
 use std::path::PathBuf;
-use crate::SETTINGS_PATHS;
 
 /// Deletes the settings directory found in the `<user home>/crate_name`
 /// e.g. `/home/username/my_cool_project`
-pub fn delete_settings(crate_name: &str) -> io::Result<()> {
-    let home_dir = crate::get_user_home().unwrap();
-    let settings_path = home_dir.join(PathBuf::from(crate_name));
-    fs::remove_dir_all(&settings_path)?;
-    SETTINGS_PATHS
-        .write()
-        .unwrap()
-        .retain(|path| match path.parent() {
-            None => true,
-            Some(parent) => parent != settings_path,
-        });
-    Ok(())
+pub fn delete_settings(crate_name: &str) -> Result<(), DeleteSettingsError> {
+    delete_setting_file(crate_name, format!("{}.ser", crate_name).as_str())
 }
 
 /// Deletes a specific settings file
@@ -47,14 +38,22 @@ pub fn delete_settings(crate_name: &str) -> io::Result<()> {
 ///
 ///
 /// ```
-pub fn delete_setting_file(crate_name: &str, file_name: &str) -> io::Result<()> {
-    let home_dir = crate::get_user_home().unwrap();
+pub fn delete_setting_file(crate_name: &str, file_name: &str) -> Result<(), DeleteSettingsError> {
+    if !valid_name(crate_name) {
+        return Err(DeleteSettingsError::InvalidCrateName);
+    }
+    if !valid_name(file_name) {
+        return Err(DeleteSettingsError::InvalidFileName);
+    }
+
+    let home_dir = crate::get_user_home().ok_or(DeleteSettingsError::FailedToGetUserHome)?;
     let settings_path = home_dir.join(PathBuf::from(crate_name));
     let settings_file = settings_path.join(file_name);
-    fs::remove_file(&settings_file)?;
+    fs::remove_file(&settings_file).map_err(|err| DeleteSettingsError::IOError(err))?;
+    println!("{},{}", crate_name, file_name);
     SETTINGS_PATHS
         .write()
-        .unwrap()
+        .map_err(|_| DeleteSettingsError::MutexPoisoned)?
         .retain(|path| path != &settings_file);
     Ok(())
 }

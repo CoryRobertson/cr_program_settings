@@ -1,11 +1,11 @@
+use crate::serialization::serialize_error::SaveSettingsError;
+use crate::serialization::serialize_to_string;
+use crate::{valid_name, SETTINGS_PATHS};
 use serde::Serialize;
-use std::path::PathBuf;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use crate::serialization::serialize_error::SaveSettingsError;
-use crate::serialization::serialize_to_string;
-use crate::SETTINGS_PATHS;
+use std::path::PathBuf;
 
 /// Saves a serializable settings object to a given filename in `USER_HOME/crate_name/file_name`
 pub fn save_settings_with_filename<T>(
@@ -16,32 +16,33 @@ pub fn save_settings_with_filename<T>(
 where
     T: Serialize,
 {
-    match crate::get_user_home() {
-        None => Err(SaveSettingsError::FailedToGetUserHome),
-        Some(home_dir) => {
-            let settings_path = home_dir.join(PathBuf::from(crate_name));
-            let settings_file_path = settings_path.join(PathBuf::from(file_name));
-            match fs::create_dir_all(&settings_path) {
-                Ok(_) => match File::create(&settings_file_path) {
-                    Ok(mut file) => match serialize_to_string(&settings) {
-                        Ok(serialized_data) => match file.write_all(serialized_data.as_bytes()) {
-                            Ok(_) => {
-                                {
-                                    let mut lock = SETTINGS_PATHS.write().unwrap();
-                                    lock.push(settings_file_path);
-                                }
-                                Ok(())
-                            }
-                            Err(err) => Err(SaveSettingsError::IOError(err)),
-                        },
-                        Err(err) => Err(SaveSettingsError::SerializationError(err)),
-                    },
-                    Err(err) => Err(SaveSettingsError::IOError(err)),
-                },
-                Err(err) => Err(SaveSettingsError::IOError(err)),
-            }
-        }
+    if !valid_name(crate_name) {
+        return Err(SaveSettingsError::InvalidCrateName);
     }
+    if !valid_name(file_name) {
+        return Err(SaveSettingsError::InvalidFileName);
+    }
+
+    let home_dir = crate::get_user_home().ok_or(SaveSettingsError::FailedToGetUserHome)?;
+    let settings_path = home_dir.join(PathBuf::from(crate_name));
+    let settings_file_path = settings_path.join(PathBuf::from(file_name));
+
+    let _ = fs::create_dir_all(&settings_path).map_err(|err| SaveSettingsError::IOError(err))?;
+    let mut file =
+        File::create(&settings_file_path).map_err(|err| SaveSettingsError::IOError(err))?;
+    let ser =
+        serialize_to_string(&settings).map_err(|err| SaveSettingsError::SerializationError(err))?;
+
+    let _ = file
+        .write_all(ser.as_bytes())
+        .map_err(|err| SaveSettingsError::IOError(err))?;
+
+    let mut lock = SETTINGS_PATHS
+        .write()
+        .map_err(|_| SaveSettingsError::MutexPoisoned)?;
+    lock.push(settings_file_path);
+
+    Ok(())
 }
 
 /// Saves the settings file given in a directory named using the crate name

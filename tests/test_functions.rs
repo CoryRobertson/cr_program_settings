@@ -1,6 +1,12 @@
+use cr_program_settings::serialization::deserialize_error::LoadSettingsError;
+use cr_program_settings::serialization::serialize_error::SaveSettingsError;
+use cr_program_settings::serialization::DeleteSettingsError;
+use cr_program_settings::{
+    delete_setting_file, delete_settings, load_settings, load_settings_with_filename,
+    save_settings, save_settings_with_filename,
+};
+use proptest::{prop_assert, prop_assert_eq, proptest};
 use serde::{Deserialize, Serialize};
-use cr_program_settings::{delete_settings, load_settings, save_settings};
-
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 struct TestStruct {
@@ -24,4 +30,126 @@ fn test_functions() {
     assert_eq!(t, loaded_settings);
 
     delete_settings(crate_name).unwrap();
+}
+
+proptest! {
+
+    #[test]
+    fn test_file_names_crate_names(file_name in "\\PC*", crate_name in "\\PC*") {
+
+        let dummy_data = TestStruct {
+            a: -10.0444,
+            b: 0,
+            c: "random text to save as a settings file".to_string(),
+        };
+
+        let res = save_settings_with_filename(&crate_name,&file_name, &dummy_data);
+
+        match res.as_ref() {
+            Ok(_) => {},
+            Err(err) => {
+                match err {
+                    SaveSettingsError::InvalidCrateName | SaveSettingsError::InvalidFileName => {
+                    },
+                    _ => {
+                        prop_assert!(false);
+                    }
+                }
+            },
+        }
+
+        if res.is_ok() {
+            match load_settings_with_filename::<TestStruct>(&file_name,&crate_name) {
+            Ok(loaded) => {
+                prop_assert_eq!(loaded,dummy_data);
+            },
+            Err(e) => {
+                match e {
+                    LoadSettingsError::InvalidCrateName | LoadSettingsError::InvalidFileName => {
+                    }
+                    _ => {
+                        prop_assert!(false);
+                    }
+                }
+            }
+            }
+
+            let delete_res = delete_setting_file(&crate_name,&file_name);
+
+            match delete_res {
+                Ok(_) => {},
+                Err(err) => {
+                    match err {
+                        DeleteSettingsError::InvalidCrateName | DeleteSettingsError::InvalidFileName => {
+                        },
+                        _ => {
+                            prop_assert!(false);
+                        }
+                    }
+                },
+            }
+        }
+
+    }
+
+     #[test]
+    fn test_crate_names(crate_name in "\\PC*") {
+
+        let dummy_data = TestStruct {
+            a: -10.0444,
+            b: 0,
+            c: "random text to save as a settings file".to_string(),
+        };
+
+        let res = save_settings(&crate_name, &dummy_data);
+
+        match res.as_ref() {
+            Ok(_) => {},
+            Err(err) => {
+                match err {
+                    SaveSettingsError::InvalidCrateName | SaveSettingsError::InvalidFileName => {
+
+                    },
+                    _ => {
+                        prop_assert!(false);
+                    }
+                }
+            },
+        }
+
+        if res.is_ok() {
+            match load_settings::<TestStruct>(&crate_name) {
+            Ok(loaded) => {
+                prop_assert_eq!(dummy_data,loaded);
+            }
+            Err(e) => {
+                match e {
+                    LoadSettingsError::InvalidCrateName | LoadSettingsError::InvalidFileName => {
+                    }
+                    _ => {
+                        prop_assert!(false);
+                    }
+                }
+            }
+        }
+
+        let delete_res = delete_settings(&crate_name);
+
+        match delete_res {
+            Ok(_) => {},
+            Err(err) => {
+                match err {
+                    DeleteSettingsError::InvalidCrateName | DeleteSettingsError::InvalidFileName => {
+
+                    },
+                    _ => {
+                        prop_assert!(false);
+                    }
+                }
+            },
+        }
+        }
+    }
+
+
 }
