@@ -39,6 +39,7 @@ pub fn delete_settings(crate_name: &str) -> Result<(), DeleteSettingsError> {
 ///
 /// ```
 pub fn delete_setting_file(crate_name: &str, file_name: &str) -> Result<(), DeleteSettingsError> {
+    
     if !valid_name(crate_name) {
         return Err(DeleteSettingsError::InvalidCrateName);
     }
@@ -49,8 +50,18 @@ pub fn delete_setting_file(crate_name: &str, file_name: &str) -> Result<(), Dele
     let home_dir = crate::get_user_home().ok_or(DeleteSettingsError::FailedToGetUserHome)?;
     let settings_path = home_dir.join(PathBuf::from(crate_name));
     let settings_file = settings_path.join(file_name);
-    fs::remove_file(&settings_file).map_err(|err| DeleteSettingsError::IOError(err))?;
-    println!("{},{}", crate_name, file_name);
+    fs::remove_file(&settings_file).map_err(DeleteSettingsError::IOError)?;
+    
+    let dir_count = fs::read_dir(&settings_path).into_iter()
+        .map(|item| { 
+            item.count()
+        })
+        .filter(|count| *count > 0)
+        .count();
+    
+    if dir_count == 0 {
+        fs::remove_dir(&settings_path).map_err(DeleteSettingsError::IOError)?;
+    }
     SETTINGS_PATHS
         .write()
         .map_err(|_| DeleteSettingsError::MutexPoisoned)?

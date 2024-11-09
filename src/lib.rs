@@ -28,6 +28,9 @@ pub fn get_user_home() -> Option<PathBuf> {
     home::home_dir()
 }
 
+#[cfg(not(any(feature = "ron", feature = "toml", feature = "yml", feature = "json", feature = "default")))]
+compile_error!("One feature needs to be enabled, default, ron, toml, yml, json");
+
 #[cfg(any(
     all(
         feature = "json",
@@ -89,6 +92,9 @@ compile_error!("Mutually exclusive features are being used for cr_program_settin
 /// let specific_settings_loaded = load_settings!("cool_filename.ser").expect("Unable to load settings with specific filename");
 ///
 /// assert_eq!(settings,specific_settings_loaded);
+/// 
+/// delete_settings!("cool_filename.ser");
+/// delete_settings!();
 /// ```
 macro_rules! save_settings {
     ($settings:expr) => {
@@ -134,6 +140,8 @@ macro_rules! save_settings {
 /// let loaded_settings = load_settings!("odd_file_name.ser","unit_test_temp").expect("Failed to load settings file");
 ///
 /// assert_eq!(settings,loaded_settings);
+/// 
+/// delete_settings!("odd_file_name.ser","unit_test_temp").expect("Unable to delete settings file");
 /// ```
 macro_rules! load_settings {
     () => {

@@ -57,9 +57,12 @@ proptest! {
                 }
             },
         }
-
+        
+        let load_res = load_settings_with_filename::<TestStruct>(&crate_name,&file_name);
+        let delete_res = delete_setting_file(&crate_name,&file_name);
+        
         if res.is_ok() {
-            match load_settings_with_filename::<TestStruct>(&file_name,&crate_name) {
+            match load_res {
             Ok(loaded) => {
                 prop_assert_eq!(loaded,dummy_data);
             },
@@ -68,13 +71,13 @@ proptest! {
                     LoadSettingsError::InvalidCrateName | LoadSettingsError::InvalidFileName => {
                     }
                     _ => {
-                        prop_assert!(false);
+                        prop_assert!(false, "{:?}", e);
                     }
                 }
             }
             }
 
-            let delete_res = delete_setting_file(&crate_name,&file_name);
+            
 
             match delete_res {
                 Ok(_) => {},
@@ -89,11 +92,12 @@ proptest! {
                 },
             }
         }
+        let _ = delete_settings!(&file_name,&crate_name);
 
     }
 
      #[test]
-    fn test_crate_names(crate_name in "\\PC*") {
+    fn test_crate_names(file_name in "\\PC*") {
 
         let dummy_data = TestStruct {
             a: -10.0444,
@@ -101,7 +105,7 @@ proptest! {
             c: "random text to save as a settings file".to_string(),
         };
 
-        let res = save_settings(&crate_name, &dummy_data);
+        let res = save_settings(&file_name, &dummy_data);
 
         match res.as_ref() {
             Ok(_) => {},
@@ -116,9 +120,12 @@ proptest! {
                 }
             },
         }
-
+        
+        let load_res = load_settings::<TestStruct>(&file_name);
+        let delete_res = delete_settings(&file_name);
+        
         if res.is_ok() {
-            match load_settings::<TestStruct>(&crate_name) {
+            match load_res {
             Ok(loaded) => {
                 prop_assert_eq!(dummy_data,loaded);
             }
@@ -133,7 +140,7 @@ proptest! {
             }
         }
 
-        let delete_res = delete_settings(&crate_name);
+        
 
         match delete_res {
             Ok(_) => {},
@@ -149,7 +156,6 @@ proptest! {
             },
         }
         }
+        let _ = delete_settings!(&file_name);
     }
-
-
 }

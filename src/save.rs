@@ -27,15 +27,15 @@ where
     let settings_path = home_dir.join(PathBuf::from(crate_name));
     let settings_file_path = settings_path.join(PathBuf::from(file_name));
 
-    let _ = fs::create_dir_all(&settings_path).map_err(|err| SaveSettingsError::IOError(err))?;
+    fs::create_dir_all(&settings_path).map_err(SaveSettingsError::IOError)?;
     let mut file =
-        File::create(&settings_file_path).map_err(|err| SaveSettingsError::IOError(err))?;
+        File::create(&settings_file_path).map_err(SaveSettingsError::IOError)?;
     let ser =
-        serialize_to_string(&settings).map_err(|err| SaveSettingsError::SerializationError(err))?;
+        serialize_to_string(&settings).map_err(SaveSettingsError::SerializationError)?;
 
-    let _ = file
+    file
         .write_all(ser.as_bytes())
-        .map_err(|err| SaveSettingsError::IOError(err))?;
+        .map_err(SaveSettingsError::IOError)?;
 
     let mut lock = SETTINGS_PATHS
         .write()

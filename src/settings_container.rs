@@ -49,7 +49,9 @@ where
     /// Attempts to load a settings container, if it fails, it will return a default `SettingsContainer`
     /// ```
     /// use serde::{Deserialize, Serialize};
+    /// use cr_program_settings::delete_settings;
     /// use cr_program_settings::settings_container::SettingsContainer;
+    /// use cr_program_settings::delete_setting_file;
     ///
     /// #[derive(Serialize,Deserialize,PartialEq,Debug)]
     /// struct InnerStruct {
@@ -72,6 +74,9 @@ where
     /// // This should fail, and resort to the default settings
     /// let loaded_settings_failed = SettingsContainer::<InnerStruct>::try_load_or_default(env!("CARGO_CRATE_NAME"),"not_a_settings_file.ser");
     /// assert_eq!(loaded_settings_failed, SettingsContainer::default(env!("CARGO_CRATE_NAME"),"not_a_settings_file.ser"));
+    ///
+    /// delete_settings!("doctest_save_settings.ser"); // may fail due to unit text execution order
+    /// delete_settings!("not_a_settings_file.ser");
     /// ```
     pub fn try_load_or_default(crate_name: &str, file_name: &str) -> Self {
         match SettingsContainer::<T>::load(crate_name, file_name) {

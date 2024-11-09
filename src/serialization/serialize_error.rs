@@ -2,6 +2,7 @@ use std::io::Error;
 
 #[derive(Debug)]
 #[non_exhaustive]
+#[allow(missing_docs)]
 /// An enum state representing the kinds of errors that saving settings has
 pub enum SaveSettingsError {
     /// The library was unable to find the users home directory
@@ -16,6 +17,7 @@ pub enum SaveSettingsError {
 }
 
 #[derive(Debug)]
+#[allow(missing_docs)]
 pub struct SerializationError(
     #[cfg(feature = "ron")] pub ron::Error,
     #[cfg(feature = "toml")] pub toml::ser::Error,

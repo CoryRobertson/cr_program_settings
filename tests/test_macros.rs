@@ -1,3 +1,4 @@
+use proptest::proptest;
 use cr_program_settings::delete_setting_file;
 use cr_program_settings::load_settings_with_filename;
 use cr_program_settings::save_settings_with_filename;
@@ -53,7 +54,7 @@ fn test_primary_macros() {
     let loaded_settings = load_settings!().unwrap();
     assert_eq!(t, loaded_settings);
 
-    delete_settings!().unwrap();
+    let _ = delete_settings!(); // this may fail due to test execution order
 }
 
 #[test]
@@ -74,11 +75,11 @@ fn test_filename_macros() {
 
     let file_name = "test_macro_settings";
 
-    let _ = save_settings!(&s, file_name).unwrap();
+    let _ = save_settings!(&s, file_name);
 
     let loaded_settings: TestStruct = load_settings!(file_name).unwrap();
 
     assert_eq!(loaded_settings, s);
 
-    delete_settings!(file_name).unwrap();
+    let _ = delete_settings!(file_name);
 }

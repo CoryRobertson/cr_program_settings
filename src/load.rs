@@ -25,15 +25,15 @@ where
     let home_dir = crate::get_user_home().ok_or(LoadSettingsError::FailedToGetUserHome)?;
     let settings_path = home_dir.join(PathBuf::from(crate_name));
     let settings_file_path = settings_path.join(PathBuf::from(file_name));
-    let mut file = File::open(&settings_file_path).map_err(|err| IOError(err))?;
+    let mut file = File::open(&settings_file_path).map_err(IOError)?;
     let mut file_data = String::new();
 
     let _ = file
         .read_to_string(&mut file_data)
-        .map_err(|err| IOError(err))?;
+        .map_err(IOError)?;
 
     let deser = deserialize_from_str::<T>(&file_data)
-        .map_err(|err| LoadSettingsError::DeserializationError(err))?;
+        .map_err(LoadSettingsError::DeserializationError)?;
 
     let mut lock = SETTINGS_PATHS
         .write()
